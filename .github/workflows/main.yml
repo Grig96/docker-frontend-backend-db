@@ -7,6 +7,9 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_FRONTEND: 446556758489.dkr.ecr.us-east-1.amazonaws.com/frontend
+  ECR_BACKEND: 446556758489.dkr.ecr.us-east-1.amazonaws.com/backend
+  
 
 jobs:
   build-and-push:
@@ -26,12 +29,6 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Set up Docker image tags
-        id: vars
-        run: |
-          echo "ECR_FRONTEND=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest" >> $GITHUB_ENV
-          echo "ECR_BACKEND=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest" >> $GITHUB_ENV
 
       - name: Build frontend Docker image
         run: docker build -t $ECR_FRONTEND ./frontend
@@ -55,8 +52,14 @@ jobs:
           ignore-unfixed: true
         continue-on-error: true
 
+      - name: Tag frontend image to ECR
+        run: docker tag $ECR_FRONTEND $ECR_FRONTEND:latest
+
       - name: Push frontend image to ECR
         run: docker push $ECR_FRONTEND
 
+      - name: Tag backend image to ECR
+        run: docker tag $ECR_BACKEND $ECR_BACKEND:latest
+        
       - name: Push backend image to ECR
         run: docker push $ECR_BACKEND
