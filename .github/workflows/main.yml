@@ -1,0 +1,62 @@
+name: Build & Push Docker Images to ECR
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set up Docker image tags
+        id: vars
+        run: |
+          echo "ECR_FRONTEND=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest" >> $GITHUB_ENV
+          echo "ECR_BACKEND=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest" >> $GITHUB_ENV
+
+      - name: Build frontend Docker image
+        run: docker build -t $ECR_FRONTEND ./frontend
+
+      - name: Build backend Docker image
+        run: docker build -t $ECR_BACKEND ./backend
+
+      - name: Trivy scan - Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ECR_FRONTEND }}
+          format: 'table'
+          ignore-unfixed: true
+        continue-on-error: true
+
+      - name: Trivy scan - Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ECR_BACKEND }}
+          format: 'table'
+          ignore-unfixed: true
+        continue-on-error: true
+
+      - name: Push frontend image to ECR
+        run: docker push $ECR_FRONTEND
+
+      - name: Push backend image to ECR
+        run: docker push $ECR_BACKEND
