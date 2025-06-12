@@ -1,0 +1,6 @@
+- name: Remove unnecessary packages
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+    state: absent
+    autoremove: yes

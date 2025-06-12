@@ -1,0 +1,7 @@
+- name: Configure Ubuntu VMs and install Nginx
+  hosts: ubuntu_vms
+  become: true
+  roles:
+  - role: docker_role
+    vars:
+      max_size: 20m

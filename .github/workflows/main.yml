@@ -9,12 +9,10 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_FRONTEND: 446556758489.dkr.ecr.us-east-1.amazonaws.com/frontend
   ECR_BACKEND: 446556758489.dkr.ecr.us-east-1.amazonaws.com/backend
-  
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,7 +25,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Log in to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build frontend Docker image
@@ -52,23 +49,24 @@ jobs:
           ignore-unfixed: true
         continue-on-error: true
 
-      - name: Tag frontend image to ECR
-        run: docker tag $ECR_FRONTEND $ECR_FRONTEND:latest
+      - name: Tag & push frontend
+        run: |
+          docker tag $ECR_FRONTEND $ECR_FRONTEND:latest
+          docker push $ECR_FRONTEND
 
-      - name: Push frontend image to ECR
-        run: docker push $ECR_FRONTEND
+      - name: Tag & push backend
+        run: |
+          docker tag $ECR_BACKEND $ECR_BACKEND:latest
+          docker push $ECR_BACKEND
 
-      - name: Tag backend image to ECR
-        run: docker tag $ECR_BACKEND $ECR_BACKEND:latest
-        
-      - name: Push backend image to ECR
-        run: docker push $ECR_BACKEND
-
-  provision-infrastracture:
+  provision-infrastructure:
     runs-on: ubuntu-latest
+    outputs:
+      ec2_ip: ${{ steps.output_ip.outputs.ec2_ip }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -93,4 +91,31 @@ jobs:
         working-directory: terraform
         run: terraform apply -auto-approve
 
+      - name: Output EC2 IP
+        id: output_ip
+        working-directory: terraform
+        run: |
+          echo "ec2_ip=$(terraform output -raw ec2_public_ip)" >> $GITHUB_OUTPUT
 
+  configure-server:
+    needs: provision-infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create ansible private key
+        run: |
+          mkdir -p ansible
+          echo "${{ secrets.EC2_SSH_KEY }}" > ansible/ec2-pair.pem
+          chmod 600 ansible/ec2-pair.pem
+
+      - name: Run Ansible playbook
+        env:
+          EC2_IP: ${{ needs.provision-infrastructure.outputs.ec2_ip }}
+        run: |
+          echo "[web]" > ansible/inventory.yml
+          echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=ansible/ec2-pair.pem" >> ansible/inventory.yml
+
+          ansible-playbook -i ansible/inventory.yml ansible/webapp-config.yml

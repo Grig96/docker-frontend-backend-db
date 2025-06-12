@@ -1,0 +1,56 @@
+- name: Install required dependencies
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+  ignore_errors: true
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  ignore_errors: true
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu jammy stable
+    state: present
+  ignore_errors: true
+
+- name: Install Docker CE, CLI, and dependencies
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin  # Docker Compose v2 as plugin
+    state: present
+
+- name: Ensure Docker service is enabled and started
+  ansible.builtin.systemd:
+    name: docker
+    enabled: yes
+    state: started
+  ignore_errors: true
+
+- name: Install Docker Compose (standalone binary for compatibility)
+  get_url:
+    url: https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+  ignore_errors: true
+
+- name: Verify Docker Compose installation
+  command: docker-compose version
+  register: compose_version
+  changed_when: false
+  ignore_errors: true
+
+- name: Show Docker Compose version
+  debug:
+    msg: "Docker Compose version: {{ compose_version.stdout }}"

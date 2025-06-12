@@ -1,0 +1,3 @@
+docker_version: "latest"
+docker_users: [ubuntu]
+docker_compose_version: "latest"
