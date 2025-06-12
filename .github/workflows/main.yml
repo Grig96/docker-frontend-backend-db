@@ -94,11 +94,11 @@ jobs:
       - name: Output EC2 IP
         id: output_ip
         working-directory: terraform
+        shell: bash
         run: |
-          terraform output ec2-ip
-          IP=$(terraform output -raw ec2-ip | tr -d '"')
-          echo "✅ EC2 Public IP: $IP"
-          echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
+          IP=$(terraform output -raw ec2-ip 2>/dev/null)
+          echo "ec2_ip=$IP" >> "$GITHUB_OUTPUT"
+
 
 
 
