@@ -97,6 +97,7 @@ jobs:
         run: |
           IP=$(terraform output ec2-ip)
           echo "ec2_ip=${IP}" >> $GITHUB_OUTPUT
+        shell: bash
 
 
 
