@@ -126,7 +126,7 @@ jobs:
         env:
           EC2_IP: ${{ needs.provision-infrastructure.outputs.ec2_ip }}
         run: |
-          echo "[web]" > inventory.yml
-          echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=ansible/ec2-pair.pem" >> inventory.yml
+          echo "[web]" > inventory.ini
+          echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=ansible/ec2-pair.pem" >> inventory.ini
 
-          ansible-playbook -i inventory.yml webapp-config.yml
+          ansible-playbook -i inventory.ini webapp-config.yml
