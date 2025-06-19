@@ -92,11 +92,13 @@ jobs:
         run: terraform apply -auto-approve
 
       - name: Output EC2 IP
-        working-directory: ./terraform
         id: get_ip
+        working-directory: ./terraform
+        shell: bash
         run: |
-          IP=$(terraform output -raw ec2-ip)
-          echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
+          IP=$(terraform output -raw ec2-ip 2>/dev/null)
+          echo "ec2_ip=${IP}" >> "$GITHUB_OUTPUT"
+
 
 
 
