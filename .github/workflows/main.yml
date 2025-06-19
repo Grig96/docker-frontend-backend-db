@@ -62,7 +62,7 @@ jobs:
   provision-infrastructure:
     runs-on: ubuntu-latest
     outputs:
-      ec2_ip: ${{ steps.output_ip.outputs.ec2_ip }}
+      ec2_ip: ${{ steps.get_ip.outputs.ec2_ip }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -92,12 +92,11 @@ jobs:
         run: terraform apply -auto-approve
 
       - name: Output EC2 IP
-        id: output_ip
-        working-directory: terraform
-        shell: bash
+        working-directory: ./terraform
+        id: get_ip
         run: |
-          IP=$(terraform output -raw ec2-ip 2>/dev/null)
-          echo "ec2_ip=$IP" >> "$GITHUB_OUTPUT"
+          IP=$(terraform output -raw ec2_public_ip)
+          echo "ec2_ip=${IP}" >> $GITHUB_OUTPUT
 
 
 
