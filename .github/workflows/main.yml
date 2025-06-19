@@ -125,6 +125,7 @@ jobs:
         working-directory: ./ansible
         env:
           EC2_IP: ${{ needs.provision-infrastructure.outputs.ec2_ip }}
+          ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
           echo "[web]" > inventory.ini
           echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=ansible/ec2-pair.pem" >> inventory.ini
