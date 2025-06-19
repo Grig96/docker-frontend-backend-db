@@ -118,15 +118,15 @@ jobs:
 
       - name: Create ansible private key
         run: |
-          mkdir -p ansible
-          echo "${{ secrets.EC2_SSH_KEY }}" > ansible/ec2-pair.pem
-          chmod 600 ansible/ec2-pair.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" > ./ansible/ec2-pair.pem
+          chmod 600 ./ansible/ec2-pair.pem
 
       - name: Run Ansible playbook
+        working-directory: ./ansible
         env:
           EC2_IP: ${{ needs.provision-infrastructure.outputs.ec2_ip }}
         run: |
-          echo "[web]" > ansible/inventory.yml
-          echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=ansible/ec2-pair.pem" >> ansible/inventory.yml
+          echo "[web]" > inventory.yml
+          echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=ansible/ec2-pair.pem" >> inventory.yml
 
-          ansible-playbook -i ansible/inventory.yml ansible/webapp-config.yml
+          ansible-playbook -i inventory.yml webapp-config.yml
