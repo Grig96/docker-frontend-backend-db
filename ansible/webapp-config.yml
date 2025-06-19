@@ -1,5 +1,5 @@
 - name: Configure Ubuntu VMs and install Nginx
-  hosts: ubuntu_vms
+  hosts: web
   become: true
   roles:
   - role: docker_role
