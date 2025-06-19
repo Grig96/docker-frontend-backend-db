@@ -95,8 +95,9 @@ jobs:
         working-directory: ./terraform
         id: get_ip
         run: |
-          EC2_IP=$(terraform output -raw ec2-ip)
-          echo "EC2_IP=$EC2_IP" >> $GITHUB_OUTPUT
+          IP=$(terraform output -raw ec2-ip)
+          echo "ec2_ip=$IP" >> $GITHUB_OUTPUT
+
 
 
 
